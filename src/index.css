@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cloudflare Panel Design System - Dark theme with orange/blue accents */
+
+@layer base {
+  :root {
+    --background: 217 19% 8%;
+    --foreground: 210 40% 96%;
+
+    --card: 217 19% 11%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 217 19% 11%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 25 95% 53%;
+    --primary-foreground: 217 19% 8%;
+
+    --secondary: 217 19% 15%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 217 19% 15%;
+    --muted-foreground: 217 10% 64%;
+
+    --accent: 200 98% 39%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 19% 20%;
+    --input: 217 19% 15%;
+    --ring: 25 95% 53%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 48 96% 53%;
+    --warning-foreground: 217 19% 8%;
+
+    --radius: 0.75rem;
+
+    /* Cloudflare specific colors */
+    --cf-orange: 25 95% 53%;
+    --cf-blue: 200 98% 39%;
+    --cf-dark: 217 19% 8%;
+    --cf-gray: 217 10% 64%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--cf-orange)), hsl(var(--cf-blue)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(217 19% 13%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(217 19% 11%), hsl(217 19% 9%));
+
+    /* Shadows */
+    --shadow-primary: 0 10px 30px -10px hsl(var(--cf-orange) / 0.3);
+    --shadow-card: 0 4px 6px -1px hsl(217 19% 5% / 0.3), 0 2px 4px -1px hsl(217 19% 5% / 0.2);
+    --shadow-xl: 0 25px 50px -12px hsl(217 19% 5% / 0.4);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
