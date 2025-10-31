@@ -46,8 +46,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     let cancelled = false;
+    let isFirstLoad = true;
     async function load() {
-      setTunnelsLoading(true);
+      if (isFirstLoad) setTunnelsLoading(true);
       try {
         const res = await fetch("/api/tunnels");
         const rows = await res.json();
@@ -140,6 +141,7 @@ const Dashboard = () => {
         if (!cancelled) setTunnels([]);
       } finally {
         if (!cancelled) setTunnelsLoading(false);
+        isFirstLoad = false;
       }
     }
     load();
