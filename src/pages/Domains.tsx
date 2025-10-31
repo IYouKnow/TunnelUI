@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-
-const API_URL = "http://192.168.1.29:3001";
+//MUDAR
+const API_URL = "http://192.168.0.29:3001";
 
 const Domains = () => {
   const [domains, setDomains] = useState<any[]>([]);

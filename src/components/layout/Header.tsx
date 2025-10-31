@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useNotifications } from "@/contexts/NotificationsContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface HeaderProps {
   isCollapsed: boolean;
@@ -26,6 +28,8 @@ export function Header({ isCollapsed, onToggleSidebar }: HeaderProps) {
   const [installOutput, setInstallOutput] = useState<string>('');
   const [installStep, setInstallStep] = useState<string>('');
   const [installProgress, setInstallProgress] = useState<number>(0);
+
+  const { notifications, unreadCount, markAllRead, markRead, remove, clearAll } = useNotifications();
 
   const commands = [
     'sudo apt update && sudo apt upgrade -y',
@@ -154,15 +158,60 @@ export function Header({ isCollapsed, onToggleSidebar }: HeaderProps) {
       {/* Right section */}
       <div className="flex items-center space-x-3">
         {/* Notifications */}
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="w-5 h-5" />
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-          >
-            2
-          </Badge>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="relative">
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 min-w-[1.25rem] rounded-full p-0 flex items-center justify-center text-[10px]"
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80 p-0">
+            <div className="px-3 py-2 flex items-center justify-between">
+              <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={markAllRead} disabled={unreadCount === 0}>Mark all read</Button>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={clearAll}>Clear</Button>
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <div className="max-h-80">
+              <ScrollArea className="h-80">
+                <div className="py-1">
+                  {notifications.length === 0 ? (
+                    <div className="px-3 py-8 text-center text-sm text-muted-foreground">No notifications</div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div key={n.id} className={cn("px-3 py-2 text-sm cursor-default select-none outline-none", !n.read && "bg-primary/5")}
+                        onMouseEnter={() => { if (!n.read) markRead(n.id); }}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="font-medium leading-none mb-1">{n.title}</div>
+                            {n.description && <div className="text-muted-foreground text-xs leading-snug">{n.description}</div>}
+                            <div className="text-[10px] text-muted-foreground mt-1">{new Date(n.timestamp).toLocaleString()}</div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {!n.read && <span className="inline-block h-2 w-2 rounded-full bg-primary" />}
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => remove(n.id)} aria-label="Dismiss">
+                              ×
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* User menu */}
         <DropdownMenu>
