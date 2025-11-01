@@ -10,7 +10,13 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("cf-gui-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
@@ -19,6 +25,14 @@ export function Layout({ children }: LayoutProps) {
       setShowWelcome(true);
     }
   }, []);
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem("cf-gui-sidebar-collapsed", String(next)); } catch {}
+      return next;
+    });
+  };
 
   const handleCloseWelcome = () => {
     localStorage.setItem("cf-gui-welcome-shown", "true");
@@ -29,13 +43,13 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-background flex">
       <Sidebar 
         isCollapsed={isSidebarCollapsed}
-        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        onToggle={toggleSidebar}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header 
           isCollapsed={isSidebarCollapsed}
-          onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onToggleSidebar={toggleSidebar}
         />
         
         <main className="flex-1 overflow-auto bg-background p-6">

@@ -1,6 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import mysql from 'mysql2/promise';
 import { exec, spawn } from 'child_process';
 import fs from 'fs';
@@ -86,6 +89,7 @@ const validateZoneIdWithCloudflare = async (zoneId, apiToken) => {
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -94,6 +98,21 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
   port: process.env.DB_PORT || 3306,
 });
+
+// Ensure users table exists (simple local auth)
+(async () => {
+  try {
+    await db.query(`CREATE TABLE IF NOT EXISTS users (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      name VARCHAR(100) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+  } catch (e) {
+    console.error('Failed to ensure users table exists:', e.message);
+  }
+})();
 
 const CLOUDFLARED_CERT_PATH = path.join(process.env.HOME || process.env.USERPROFILE || '', '.cloudflared', 'cert.pem');
 
@@ -260,6 +279,85 @@ app.get('/api/domains', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Error fetching domains', details: err.message });
   }
+});
+
+// ------------------------------------------------------
+// Auth helpers and endpoints (local JWT cookie auth)
+// ------------------------------------------------------
+const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-env';
+const COOKIE_NAME = 'cfui_token';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: Boolean(process.env.COOKIE_SECURE === 'true'),
+  path: '/',
+  maxAge: 60 * 60 * 24 * 7, // 7 days
+};
+
+function signToken(payload) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+}
+
+function requireAuth(req, res, next) {
+  try {
+    const token = req.cookies?.[COOKIE_NAME];
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    return next();
+  } catch (e) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body || {};
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.query('INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)', [email, passwordHash, name || null]);
+    const [[user]] = await db.query('SELECT id, email, name, created_at FROM users WHERE email = ?', [email]);
+    const token = signToken({ id: user.id, email: user.email, name: user.name });
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    return res.status(201).json({ id: user.id, email: user.email, name: user.name, created_at: user.created_at });
+  } catch (e) {
+    if (e && e.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    return res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    const [[user]] = await db.query('SELECT id, email, name, password_hash FROM users WHERE email = ?', [email]);
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+    const token = signToken({ id: user.id, email: user.email, name: user.name });
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    return res.json({ id: user.id, email: user.email, name: user.name });
+  } catch {
+    return res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  try {
+    const token = req.cookies?.[COOKIE_NAME];
+    if (!token) return res.json(null);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return res.json({ id: decoded.id, email: decoded.email, name: decoded.name || null });
+  } catch {
+    return res.json(null);
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie(COOKIE_NAME, { ...COOKIE_OPTIONS, maxAge: 0 });
+  return res.json({ success: true });
 });
 
 app.post('/api/cloudflared/login', async (req, res) => {

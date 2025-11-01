@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderProps {
   isCollapsed: boolean;
@@ -30,6 +31,7 @@ export function Header({ isCollapsed, onToggleSidebar }: HeaderProps) {
   const [installProgress, setInstallProgress] = useState<number>(0);
 
   const { notifications, unreadCount, markAllRead, markRead, remove, clearAll } = useNotifications();
+  const { user, logout } = useAuth();
 
   const commands = [
     'sudo apt update && sudo apt upgrade -y',
@@ -214,36 +216,42 @@ export function Header({ isCollapsed, onToggleSidebar }: HeaderProps) {
         </DropdownMenu>
 
         {/* User menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center">
-                <User className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <div className="hidden sm:block text-left">
-                <div className="text-sm font-medium">Admin</div>
-                <div className="text-xs text-muted-foreground">admin@localhost</div>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              System Logs
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-sm font-medium">{user.name || user.email}</div>
+                  <div className="text-xs text-muted-foreground">{user.email}</div>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => {}}>
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {}}>
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {}}>
+                System Logs
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={logout}>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button asChild variant="default" size="sm">
+            <a href="/login">Sign in</a>
+          </Button>
+        )}
       </div>
 
       <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
